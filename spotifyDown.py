@@ -62,6 +62,7 @@ HTML_TEMPLATE = """
             --primary: #1DB954;
             --primary-dark: #1aa34a;
             --primary-glow: rgba(29, 185, 84, 0.4);
+            --accent: #8b5cf6;
             --bg-dark: #0a0a0f;
             --bg-card: rgba(255, 255, 255, 0.03);
             --bg-card-hover: rgba(255, 255, 255, 0.06);
@@ -70,6 +71,33 @@ HTML_TEMPLATE = """
             --text-muted: #888;
             --error: #ff4757;
             --success: #1DB954;
+        }
+
+        body.high-contrast {
+            --bg-dark: #020205;
+            --bg-card: rgba(255, 255, 255, 0.08);
+            --bg-card-hover: rgba(255, 255, 255, 0.14);
+            --text-muted: #c4c4c4;
+            --border: rgba(255, 255, 255, 0.2);
+        }
+
+        body.reduced-motion * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+
+        body.theme-matrix {
+            --primary: #22c55e;
+            --primary-glow: rgba(34, 197, 94, 0.45);
+            --accent: #06b6d4;
+        }
+
+        body.theme-midnight {
+            --primary: #a855f7;
+            --primary-glow: rgba(168, 85, 247, 0.45);
+            --accent: #f43f5e;
         }
 
         * {
@@ -88,6 +116,20 @@ HTML_TEMPLATE = """
             color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
+            position: relative;
+        }
+
+        .cursor-glow {
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.15), transparent 65%);
+            pointer-events: none;
+            z-index: 0;
+            transform: translate(-50%, -50%);
+            filter: blur(12px);
+            transition: transform 0.08s linear;
         }
 
         /* Custom Scrollbar */
@@ -218,6 +260,59 @@ HTML_TEMPLATE = """
             margin: 0 auto;
         }
 
+        .control-dock {
+            position: sticky;
+            top: 14px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            margin-bottom: 26px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: rgba(7, 9, 14, 0.78);
+            backdrop-filter: blur(18px);
+        }
+
+        .mode-pills {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            color: var(--text-muted);
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pill.active {
+            color: #fff;
+            border-color: rgba(139, 92, 246, 0.55);
+            box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.25);
+        }
+
+        .toggles {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
         /* ===== HEADER ===== */
         .header {
             text-align: center;
@@ -307,6 +402,22 @@ HTML_TEMPLATE = """
             background: var(--bg-card-hover);
             border-color: rgba(255, 255, 255, 0.12);
             transform: translateY(-2px);
+        }
+
+        .interactive-card {
+            transform-style: preserve-3d;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .interactive-card:hover {
+            border-color: rgba(139, 92, 246, 0.35);
+        }
+
+        @media (max-width: 700px) {
+            .control-dock {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
 
         .card-header {
@@ -880,6 +991,8 @@ HTML_TEMPLATE = """
     </style>
 </head>
 <body>
+    <div class="cursor-glow" id="cursor-glow"></div>
+
     <!-- Parallax Background -->
     <div class="parallax-container">
         <div class="gradient-orb orb-1"></div>
@@ -892,6 +1005,18 @@ HTML_TEMPLATE = """
     <!-- Main Content -->
     <div class="main-content">
         <div class="container">
+            <div class="control-dock">
+                <div class="mode-pills" id="mode-pills">
+                    <button type="button" class="pill active" data-theme="neon">Neon Pulse</button>
+                    <button type="button" class="pill" data-theme="matrix">Matrix Grid</button>
+                    <button type="button" class="pill" data-theme="midnight">Midnight Core</button>
+                </div>
+                <div class="toggles">
+                    <label class="toggle"><input type="checkbox" id="motion-toggle" checked> Motion</label>
+                    <label class="toggle"><input type="checkbox" id="contrast-toggle"> Contrast+</label>
+                </div>
+            </div>
+
             <!-- Header -->
             <header class="header">
                 <div class="logo">
@@ -903,7 +1028,7 @@ HTML_TEMPLATE = """
             </header>
 
             <!-- Configuration Card -->
-            <div class="glass-card" id="config-card">
+            <div class="glass-card interactive-card" id="config-card">
                 <div class="card-header">
                     <div class="card-icon">🔐</div>
                     <div>
@@ -957,7 +1082,7 @@ HTML_TEMPLATE = """
             </div>
 
             <!-- Progress Card -->
-            <div class="glass-card progress-section" id="progress-section">
+            <div class="glass-card progress-section interactive-card" id="progress-section">
                 <div class="card-header">
                     <div class="card-icon">📥</div>
                     <div>
@@ -1075,11 +1200,60 @@ HTML_TEMPLATE = """
         }
         createParticles();
 
+        const cursorGlow = document.getElementById('cursor-glow');
+        const motionToggle = document.getElementById('motion-toggle');
+        const contrastToggle = document.getElementById('contrast-toggle');
+        const modePills = document.querySelectorAll('#mode-pills .pill');
+        const cards = document.querySelectorAll('.interactive-card');
+        let processedLogs = 0;
+
+        function applyTheme(theme) {
+            document.body.classList.remove('theme-neon', 'theme-matrix', 'theme-midnight');
+            document.body.classList.add(`theme-${theme}`);
+            modePills.forEach(pill => pill.classList.toggle('active', pill.dataset.theme === theme));
+            localStorage.setItem('ui_theme', theme);
+        }
+
+        function setMotion(enabled) {
+            document.body.classList.toggle('reduced-motion', !enabled);
+            localStorage.setItem('ui_motion', enabled ? 'on' : 'off');
+        }
+
+        function setContrast(enabled) {
+            document.body.classList.toggle('high-contrast', enabled);
+            localStorage.setItem('ui_contrast', enabled ? 'on' : 'off');
+        }
+
+        modePills.forEach((pill) => {
+            pill.addEventListener('click', () => applyTheme(pill.dataset.theme));
+        });
+
+        motionToggle.addEventListener('change', () => setMotion(motionToggle.checked));
+        contrastToggle.addEventListener('change', () => setContrast(contrastToggle.checked));
+
+        cards.forEach((card) => {
+            card.addEventListener('mousemove', (event) => {
+                if (document.body.classList.contains('reduced-motion')) return;
+                const rect = card.getBoundingClientRect();
+                const x = (event.clientX - rect.left) / rect.width;
+                const y = (event.clientY - rect.top) / rect.height;
+                const rotateX = (0.5 - y) * 8;
+                const rotateY = (x - 0.5) * 10;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = '';
+            });
+        });
+
         // Parallax effect on mouse move
         document.addEventListener('mousemove', (e) => {
             const orbs = document.querySelectorAll('.gradient-orb');
             const x = e.clientX / window.innerWidth;
             const y = e.clientY / window.innerHeight;
+
+            cursorGlow.style.left = `${e.clientX}px`;
+            cursorGlow.style.top = `${e.clientY}px`;
             
             orbs.forEach((orb, index) => {
                 const speed = (index + 1) * 20;
@@ -1130,6 +1304,7 @@ HTML_TEMPLATE = """
             document.getElementById('log-entries').innerHTML = '';
             document.getElementById('results-section').classList.remove('active');
             document.getElementById('playlist-info').style.display = 'none';
+            processedLogs = 0;
 
             try {
                 const response = await fetch('/start', {
@@ -1195,8 +1370,12 @@ HTML_TEMPLATE = """
                     }
                 }
 
-                // Add log entries
-                status.log.forEach(entry => addLog(entry.message, entry.type));
+                // Add only new log entries
+                for (let i = processedLogs; i < status.log.length; i++) {
+                    const entry = status.log[i];
+                    addLog(entry.message, entry.type);
+                }
+                processedLogs = status.log.length;
 
                 // Check if finished
                 if (!status.running && status.progress > 0) {
@@ -1259,6 +1438,16 @@ HTML_TEMPLATE = """
             const savedSecret = localStorage.getItem('spotify_client_secret');
             if (savedId) document.getElementById('client_id').value = savedId;
             if (savedSecret) document.getElementById('client_secret').value = savedSecret;
+
+            const savedTheme = localStorage.getItem('ui_theme') || 'neon';
+            const motion = localStorage.getItem('ui_motion') !== 'off';
+            const contrast = localStorage.getItem('ui_contrast') === 'on';
+
+            motionToggle.checked = motion;
+            contrastToggle.checked = contrast;
+            setMotion(motion);
+            setContrast(contrast);
+            applyTheme(savedTheme);
         });
     </script>
 </body>
